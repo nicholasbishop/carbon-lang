@@ -94,8 +94,22 @@ auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
 
   auto class_type =
       sem_ir.constant_values().TryGetInstAs<SemIR::ClassType>(const_id);
-  if (!class_type) {
-    return std::nullopt;
+  // TODO: this almost certainly wrong.
+  SemIR::TypeId class_type_id = SemIR::TypeId::None;
+  if (class_type) {
+    class_type_id = sem_ir.types().GetTypeIdForTypeConstantId(const_id);
+  } else {
+    class_type_id = sem_ir.constant_values().GetInst(const_id).type_id();
+    if (auto generic_class_type =
+            sem_ir.insts().TryGetAs<SemIR::GenericClassType>(
+                sem_ir.types().GetTypeInstId(class_type_id))) {
+      class_type = SemIR::ClassType{.type_id = generic_class_type->type_id,
+                                    .class_id = generic_class_type->class_id,
+                                    // TODO: ?
+                                    .specific_id = SemIR::SpecificId::None};
+    } else {
+      return std::nullopt;
+    }
   }
 
   // Determine whether this class was imported from C++.
@@ -110,7 +124,6 @@ auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
     return std::nullopt;
   }
 
-  auto class_type_id = sem_ir.types().GetTypeIdForTypeConstantId(const_id);
   return std::make_pair(class_type_id, *class_type);
 }
 

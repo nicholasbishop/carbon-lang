@@ -12,6 +12,9 @@
 
 namespace Carbon::Check {
 
+// TODO: hack for testing
+extern clang::TemplateTypeParmDecl* template_type_parm_decl;
+
 // Converts a Carbon type to a corresponding C++ type. This uses the default
 // type mapping, which is suitable for template arguments, typedefs, etc. but
 // may not be the right mapping to use in a function signature. Returns a null

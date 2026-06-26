@@ -35,6 +35,9 @@
 
 namespace Carbon::Check {
 
+// TODO: delete
+clang::TemplateTypeParmDecl* template_type_parm_decl = nullptr;
+
 // A function that wraps a C++ type to form another C++ type. Note that this is
 // a std::function to allow lambda captures.
 using WrapFn = std::function<clang::QualType(Context& context,
@@ -298,6 +301,25 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
                 inner_type, context.ints().Get(int_id), /*SizeExpr=*/nullptr,
                 clang::ArraySizeModifier::Normal, /*IndexTypeQuals=*/0);
           }};
+    }
+    case CARBON_KIND(SemIR::SymbolicBinding symbolic_binding): {
+      auto entity_name =
+          context.entity_names().Get(symbolic_binding.entity_name_id);
+      (void)entity_name;
+      // const auto& parent_scope =
+      //     context.name_scopes().Get(entity_name.parent_scope_id);
+      // TODO
+      // (void)parent_scope;
+
+      // TODO
+      (void)symbolic_binding;
+      // return context.ast_context().UnresolvedTemplateTy;
+      // TODO
+      CARBON_CHECK(template_type_parm_decl);
+
+      return context.ast_context().getTemplateTypeParmType(
+          /*Depth=*/0, /*Index=*/0, /*ParameterPack=*/false,
+          template_type_parm_decl);
     }
 
     default: {

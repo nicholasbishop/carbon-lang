@@ -177,6 +177,93 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   return record_decl;
 }
 
+auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
+                             SemIR::GenericClassType generic_class_type)
+    -> clang::ClassTemplateDecl* {
+  // TODO: is there some way to get at the class_type, and see that it
+  // is symbolic, and stop using generic_class_type entirely...
+
+  // TODO:
+  // Roughly:
+  //
+  // Create ClassTemplateDecl
+  //
+  // Create TemplateTypeParmDecls as needed
+  //
+  // Export the inner class with the ClassTemplateDecl as the decl context?
+
+  if (generic_class_type.enclosing_specific_id != SemIR::SpecificId::None) {
+    context.TODO(inst_id, "exporting class with an enclosing specific");
+    return nullptr;
+  }
+
+  SemIR::LocId loc_id(inst_id);
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  const auto& class_info = context.classes().Get(generic_class_type.class_id);
+
+  // TODO: check if already has a clang_decl.
+
+  // Map the parent scope into the C++ AST.
+  auto* decl_context =
+      ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
+  if (!decl_context) {
+    return nullptr;
+  }
+
+  // TODO: consider changing ExportClassToCpp to take class_id and
+  // specific_id directly.
+  auto* tag_decl = ExportClassToCpp(context, loc_id,
+                                    {.type_id = generic_class_type.type_id,
+                                     .class_id = generic_class_type.class_id,
+                                     .specific_id = SemIR::SpecificId::None});
+  if (!tag_decl) {
+    return nullptr;
+  }
+
+  auto param_patterns = context.inst_blocks().Get(class_info.param_patterns_id);
+  llvm::SmallVector<clang::NamedDecl*> param_decls;
+  for (auto param_pattern : param_patterns) {
+    // TODO
+    (void)param_pattern;
+
+    // TODO
+    clang::IdentifierInfo& param_ident = context.ast_context().Idents.get("T");
+
+    auto* param_decl = clang::TemplateTypeParmDecl::Create(
+        context.ast_context(), tag_decl, /*KeyLoc=*/clang_loc,
+        /*NameLoc=*/clang_loc,
+        /*D=*/0, /*P=*/0, &param_ident, /*Typename=*/true,
+        /*ParameterPack=*/false);
+    param_decls.push_back(param_decl);
+
+    template_type_parm_decl = param_decl;
+  }
+
+  auto* template_param_list =
+      clang::TemplateParameterList::Create(context.ast_context(),
+                                           /*TemplateLoc=*/clang_loc,
+                                           /*LAngleLoc=*/clang_loc, param_decls,
+                                           /*RAngleLoc=*/clang_loc,
+                                           /*RequiresClause=*/nullptr);
+
+  auto* class_template_decl = clang::ClassTemplateDecl::Create(
+      context.ast_context(), decl_context, clang_loc, tag_decl->getDeclName(),
+      template_param_list, tag_decl);
+
+  // Create and store the `ClangDeclId`.
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(class_template_decl);
+  // TODO: is this the right inst id to use? Does it conflict with
+  // ExportClassToCpp?
+  context.clang_decls().Add({.key = key, .inst_id = inst_id});
+
+  // TODO: just trying to get a type with a definition.
+  decl_context->addHiddenDecl(tag_decl);
+  context.ast_context().getExternalSource()->CompleteType(tag_decl);
+
+  return class_template_decl;
+}
+
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
                                     SemIR::NameId member_name_id,
                                     clang::Decl* member) -> void {
@@ -212,9 +299,11 @@ static auto CreateCppFieldDecl(Context& context,
 
   // Create the `clang::FieldDecl`.
   auto clang_loc = GetCppLocation(context, SemIR::LocId(field_inst_id));
+  auto* tinfo =
+      context.ast_context().getTrivialTypeSourceInfo(cpp_type, clang_loc);
   auto* cpp_field_decl = clang::FieldDecl::Create(
       context.ast_context(), record_decl, /*StartLoc=*/clang_loc,
-      /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
+      /*IdLoc=*/clang_loc, identifier_info, cpp_type, tinfo,
       /*BW=*/nullptr,
       /*Mutable=*/true, clang::ICIS_NoInit);
 

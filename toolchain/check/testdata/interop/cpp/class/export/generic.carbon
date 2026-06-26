@@ -20,23 +20,7 @@ class C(T:! type) {
 
 inline Cpp '''
 void F() {
-  // CHECK:STDERR: generic.carbon:[[@LINE+12]]:11: error: no member named 'C' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    10 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic.carbon:[[@LINE+8]]:16: error: expected '(' for function-style cast or type construction [CppInteropParseError]
-  // CHECK:STDERR:    10 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |             ~~~^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic.carbon:[[@LINE+4]]:18: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    10 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR:
   Carbon::C<int> c;
-  // CHECK:STDERR: generic.carbon:[[@LINE+4]]:3: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    11 |   c.t = 123;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR:
   c.t = 123;
 }
 ''';
