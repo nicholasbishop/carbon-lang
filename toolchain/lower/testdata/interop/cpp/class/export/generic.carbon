@@ -16,6 +16,8 @@ import Cpp;
 
 class C(T: type) {
   var t: T;
+
+  fn M1(unused ref self) {}
 }
 
 inline Cpp '''
@@ -27,6 +29,8 @@ void F() {
   c1.t = A();
   Carbon::C<B> c2;
   c2.t = B();
+
+  c1.M1();
 }
 ''';
 
@@ -45,21 +49,22 @@ fn Run() {
 // CHECK:STDOUT: %"class.Carbon::C.0" = type {}
 // CHECK:STDOUT: %class.B = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
+// CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z1Fv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c1 = alloca %"class.Carbon::C", align 1
 // CHECK:STDOUT:   %ref.tmp = alloca %class.A, align 1
 // CHECK:STDOUT:   %c2 = alloca %"class.Carbon::C.0", align 1
 // CHECK:STDOUT:   %ref.tmp1 = alloca %class.B, align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c1) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c2) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp1) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp1) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c2) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c1) #2
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c1) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c2) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp1) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp1) #3
+// CHECK:STDOUT:   call void @_ZNR6Carbon1CI1AE2M1Ev(ptr noundef nonnull align 1 %c1)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c2) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c1) #3
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,8 +74,10 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.end.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZNR6Carbon1CI1AE2M1Ev(ptr noundef nonnull align 1) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #2 !dbg !12 {
+// CHECK:STDOUT: define i32 @main() #3 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z1Fv(), !dbg !16
 // CHECK:STDOUT:   ret i32 0, !dbg !17
@@ -80,9 +87,10 @@ fn Run() {
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.end.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!0}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
@@ -100,10 +108,10 @@ fn Run() {
 // CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
 // CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !1, line: 20, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !1, line: 24, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DILocation(line: 21, column: 3, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 20, column: 1, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 25, column: 3, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 24, column: 1, scope: !12)
 // CHECK:STDOUT:

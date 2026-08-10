@@ -115,7 +115,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class GenericConstructor {
-  // CHECK:STDERR: fail_todo_call_generic_constructor.carbon:[[@LINE+4]]:3: error: semantics TODO: `support exporting generic member functions` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_call_generic_constructor.carbon:[[@LINE+4]]:3: error: semantics TODO: `support exporting generic constructors` [SemanticsTodo]
   // CHECK:STDERR:   fn GenericConstructor[T: type](_: T) -> Self {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -149,10 +149,6 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class GenericClass(T: type) {
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
-  // CHECK:STDERR:   fn GenericClass(_: T) -> Self {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   fn GenericClass(_: T) -> Self {
     return {};
   }
@@ -161,15 +157,15 @@ class GenericClass(T: type) {
 inline Cpp '''
 void CallGenericClass() {
   // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+13]]:29: error: no matching constructor for initialization of 'Carbon::GenericClass<int>' [CppInteropParseError]
-  // CHECK:STDERR:    30 |   Carbon::GenericClass<int> c(0);
+  // CHECK:STDERR:    26 |   Carbon::GenericClass<int> c(0);
   // CHECK:STDERR:       |                             ^ ~
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-15]]:29: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const GenericClass<int>' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-11]]:29: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const GenericClass<int>' for 1st argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | class GenericClass(T: type) {
   // CHECK:STDERR:       |                             ^
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-18]]:29: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'GenericClass<int>' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-14]]:29: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'GenericClass<int>' for 1st argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | class GenericClass(T: type) {
   // CHECK:STDERR:       |                             ^
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-21]]:29: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-17]]:29: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
   // CHECK:STDERR:     5 | class GenericClass(T: type) {
   // CHECK:STDERR:       |                             ^
   // CHECK:STDERR:

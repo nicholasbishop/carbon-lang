@@ -229,11 +229,19 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
   }
 
   // Otherwise, find the existing C++ declaration or create a new one.
-  auto* tag_decl = ExportClassToCpp(context, class_type);
-  if (!tag_decl) {
+  auto* decl = ExportClassToCpp(context, class_type);
+  if (!decl) {
     return clang::QualType();
   }
-  return ast_context.getCanonicalTagType(tag_decl);
+  if (auto* tag_decl = llvm::dyn_cast<clang::TagDecl>(decl)) {
+    return ast_context.getCanonicalTagType(tag_decl);
+  } else {
+    // TODO
+    auto class_template_decl = llvm::dyn_cast<clang::ClassTemplateDecl>(decl);
+    // return ast_context.getTypeDeclType(decl);
+    return class_template_decl->getCanonicalInjectedSpecializationType(
+        context.ast_context());
+  }
 }
 
 // Maps a symbolic Carbon type to a C++ template parameter type.

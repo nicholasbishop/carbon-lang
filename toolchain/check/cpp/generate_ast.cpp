@@ -166,7 +166,7 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
       -> std::variant<clang::NamedDecl*, clang::QualType>;
 
   auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
-                                SemIR::FunctionId function_id)
+                                const SemIR::CalleeFunction& callee_function)
       -> clang::NamedDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
@@ -231,10 +231,10 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     case SemIR::StructValue::Kind: {
       auto type_inst_id =
           context_->types().GetTypeInstId(target_inst.type_id());
-      auto callee = GetCallee(context_->sem_ir(), target_inst_id);
+      auto callee =
+          GetCallee(context_->sem_ir(), target_inst_id, lookup.specific_id);
       if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
-        return GetOrExportFunctionToCpp(target_inst_id,
-                                        callee_function->function_id);
+        return GetOrExportFunctionToCpp(target_inst_id, *callee_function);
       } else if (auto generic_class =
                      context_->insts().TryGetAs<SemIR::GenericClassType>(
                          type_inst_id)) {
@@ -256,16 +256,17 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
 }
 
 auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
-    SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
+    SemIR::InstId target_inst_id, const SemIR::CalleeFunction& callee_function)
     -> clang::NamedDecl* {
-  SemIR::Function& function = context_->functions().Get(function_id);
-  if (const auto* clang_decl =
-          context_->clang_decls().Lookup(function.first_decl_id())) {
+  SemIR::Function& function =
+      context_->functions().Get(callee_function.function_id);
+  if (const auto* clang_decl = context_->clang_decls().Lookup(
+          function.first_decl_id(), callee_function.enclosing_specific_id)) {
     return cast<clang::NamedDecl>(clang_decl->decl());
   }
 
-  auto* named_decl =
-      ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
+  auto* named_decl = ExportFunctionToCpp(
+      *context_, SemIR::LocId(target_inst_id), callee_function);
   if (!named_decl) {
     return nullptr;
   }

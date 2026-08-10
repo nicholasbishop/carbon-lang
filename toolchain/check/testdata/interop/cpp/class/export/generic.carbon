@@ -74,20 +74,12 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class ClassWithMethod(T: type) {
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
-  // CHECK:STDERR:   fn M(unused ref self) {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   fn M(unused ref self) {}
 }
 
 inline Cpp '''
 void FMethodCall() {
   Carbon::ClassWithMethod<int> c;
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:5: error: no member named 'M' in 'Carbon::ClassWithMethod<int>' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   c.M();
-  // CHECK:STDERR:       |   ~ ^
-  // CHECK:STDERR:
   c.M();
 }
 ''';

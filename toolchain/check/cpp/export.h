@@ -23,8 +23,9 @@ namespace Carbon::Check {
 // If the name scope has already been exported, returns the existing context.
 // Otherwise, creates a new C++ declaration context and returns it. Returns
 // nullptr if the name scope could not be exported and an error was diagnosed.
-auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
-                          SemIR::NameScopeId name_scope_id)
+auto ExportNameScopeToCpp(
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId name_scope_id,
+    SemIR::SpecificId enclosing_specific_id = SemIR::SpecificId::None)
     -> clang::DeclContext*;
 
 // Exports a Carbon class into C++ as a class, or returns the C++ tag type that
@@ -34,7 +35,7 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 // Otherwise, creates a new C++ class and returns it. Returns nullptr if the
 // class could not be exported and an error was diagnosed.
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
-    -> clang::TagDecl*;
+    -> clang::NamedDecl*;
 
 // Exports a generic Carbon class into C++ as a templated class.
 //
@@ -76,7 +77,8 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 // If the function is generic, a `clang::FunctionTemplateDecl` will be
 // created instead.
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId function_id) -> clang::NamedDecl*;
+                         const SemIR::CalleeFunction& callee_function)
+    -> clang::NamedDecl*;
 
 // Exports a Carbon virtual function as a C++ `clang::FunctionDecl` declaration.
 // Does not emit a definition.
