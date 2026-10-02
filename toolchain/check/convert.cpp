@@ -2250,6 +2250,8 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
           target.storage_access_block->MergeReplacing(storage_arg_id,
                                                       storage_id);
         });
+
+    target.storage_access_block->InsertHere();
     return AddSpliceInst(context, result_id, target_type_inst_id);
   }
 
